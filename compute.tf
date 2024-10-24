@@ -18,11 +18,11 @@ resource "google_compute_instance_group_manager" "default" {
     port = 80
   }
   auto_healing_policies {
-    health_check      = google_compute_health_check.default.id
+    health_check      = google_compute_http_health_check.graphhopper_health_check.id
     initial_delay_sec = 300
   }
   base_instance_name = "graphhopper-instance"
-  target_size        = 1
+  target_size        = 2
 }
 
 data "google_compute_instance_group" "default" {
@@ -39,7 +39,7 @@ resource "google_compute_autoscaler" "default" {
 
   autoscaling_policy {
     max_replicas    = 3
-    min_replicas    = 1
+    min_replicas    = 2
     cooldown_period = 120
 
     cpu_utilization {
