@@ -3,15 +3,11 @@
 #   to run Graphhopper.
 #   - Compatible operating system
 #   - JRE (17+)
-resource "google_compute_disk" "production_disk" {
-  image                     = "https://www.googleapis.com/compute/beta/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240307b"
-  licenses                  = ["https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2004-lts"]
-  name                      = "production-disk"
-  physical_block_size_bytes = 4096
-  project                   = var.project_id
-  size                      = 10
-  type                      = "pd-balanced"
-  zone                      = "us-central1-c"
+resource "google_compute_disk" "trailblaze_boot_disk" {
+  name = "trailblaze-init"
+  zone = var.primary_zone
+  type = "pd-balanced"
+  size = 10
 }
 
 # Graphhopper Data Disk
@@ -24,11 +20,11 @@ resource "google_compute_disk" "production_disk" {
 #           - Elevation data directory
 #           - Custom model directory
 resource "google_compute_disk" "graph_data_disk" {
-  name    = "graph-data-disk"
-  project = var.project_id
-  size    = 30
-  type    = "pd-balanced"
-  zone    = "us-central1-c"
+  name = "graph-data-disk"
+  description = "stores graphhopper data"
+  zone = var.primary_zone
+  type = "pd-balanced"
+  size = 20
 }
 
 resource "google_compute_image" "system-image" {
@@ -38,17 +34,17 @@ resource "google_compute_image" "system-image" {
   }
   name              = "system-image"
   project           = var.project_id
-  source_disk       = google_compute_disk.production_disk.self_link
-  storage_locations = ["us-central1"]
+  source_disk       = google_compute_disk.trailblaze_boot_disk.self_link
+  storage_locations = [var.primary_region]
 }
 
 resource "google_compute_image" "data-image" {
-  disk_size_gb = 30
+  disk_size_gb = 20
   lifecycle {
     create_before_destroy = true
   }
   name              = "data-image"
   project           = var.project_id
   source_disk       = google_compute_disk.graph_data_disk.self_link
-  storage_locations = ["us-central1"]
+  storage_locations = [var.primary_region]
 }

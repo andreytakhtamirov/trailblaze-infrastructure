@@ -3,7 +3,7 @@ resource "google_compute_network" "default" {
 }
 
 resource "google_compute_instance_group_manager" "default" {
-  zone    = "us-central1-c"
+  zone    = var.primary_zone
   name    = "instance-group-manager"
   project = var.project_id
   lifecycle {
@@ -19,10 +19,10 @@ resource "google_compute_instance_group_manager" "default" {
   }
   auto_healing_policies {
     health_check      = google_compute_http_health_check.graphhopper_health_check.id
-    initial_delay_sec = 300
+    initial_delay_sec = 55
   }
   base_instance_name = "graphhopper-instance"
-  target_size        = 2
+  target_size        = 1
 }
 
 data "google_compute_instance_group" "default" {
@@ -34,13 +34,13 @@ data "google_compute_instance_group" "default" {
 resource "google_compute_autoscaler" "default" {
   name    = "trailblaze-autoscaler"
   project = var.project_id
-  zone    = "us-central1-c"
+  zone    = var.primary_zone
   target  = google_compute_instance_group_manager.default.id
 
   autoscaling_policy {
     max_replicas    = 3
-    min_replicas    = 2
-    cooldown_period = 120
+    min_replicas    = 1
+    cooldown_period = 50
 
     cpu_utilization {
       target = 0.7
@@ -58,20 +58,22 @@ resource "google_compute_instance_template" "graphhopper_template" {
     auto_delete  = true
     boot         = true
     mode         = "READ_WRITE"
+    disk_type = "pd-balanced"
     source_image = google_compute_image.system-image.self_link
   }
   disk {
     auto_delete  = true
     mode         = "READ_WRITE"
+    disk_type = "pd-ssd"
     source_image = google_compute_image.data-image.self_link
   }
-  machine_type = "n2d-custom-4-17920"
+  machine_type = "n2d-highmem-2"
   metadata = {
     startup-script = <<-EOF
         #!/bin/bash
-        mkdir ~/data
-        sudo mount /dev/sdb ~/data
-        cd ~/data
+        mkdir /home/${var.username}/data
+        sudo mount /dev/sdb /home/${var.username}/data
+        cd /home/${var.username}/data
         bash start-app.sh
       EOF
     ssh-keys       = "${var.account_email}:${file("gcp_ssh.pub")}"

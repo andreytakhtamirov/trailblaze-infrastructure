@@ -1,6 +1,7 @@
 provider "google" {
   project = var.project_id
-  region  = "us-central1-a"
+  region  = var.primary_region
+  zone    = var.primary_zone
 }
 
 resource "google_compute_http_health_check" "graphhopper_health_check" {
@@ -32,7 +33,7 @@ resource "google_compute_region_health_check" "default" {
   healthy_threshold  = 2
   name               = "server-healthcheck"
   project            = var.project_id
-  region             = "us-central1"
+  region             = var.primary_region
   tcp_health_check {
     port         = 80
     proxy_header = "NONE"
@@ -50,13 +51,4 @@ resource "google_compute_managed_ssl_certificate" "default" {
   managed {
     domains = [var.api_domain]
   }
-}
-
-resource "google_storage_bucket" "trailblaze-graphhopper-bucket" {
-  force_destroy            = false
-  location                 = "US-WEST1"
-  name                     = var.bucket_name
-  project                  = var.project_id
-  public_access_prevention = "enforced"
-  storage_class            = "STANDARD"
 }

@@ -46,15 +46,16 @@ resource "google_compute_global_forwarding_rule" "default" {
 }
 
 # Forward HTTP traffic from global address to proxy
-resource "google_compute_global_forwarding_rule" "test" {
-  ip_address            = google_compute_global_address.default.id
-  ip_protocol           = "TCP"
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-  name                  = "test-frontend-forwarding-rule"
-  port_range            = "80"
-  project               = var.project_id
-  target                = google_compute_target_http_proxy.default.id
-}
+# Useful to test resources while waiting for the main HTTPS certificate to be issued.
+# resource "google_compute_global_forwarding_rule" "test" {
+#   ip_address            = google_compute_global_address.default.id
+#   ip_protocol           = "TCP"
+#   load_balancing_scheme = "EXTERNAL_MANAGED"
+#   name                  = "test-frontend-forwarding-rule"
+#   port_range            = "80"
+#   project               = var.project_id
+#   target                = google_compute_target_http_proxy.default.id
+# }
 
 resource "google_compute_target_https_proxy" "default" {
   name             = "loadbal-target-proxy"
